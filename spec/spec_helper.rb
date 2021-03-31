@@ -2,7 +2,14 @@ $LOAD_PATH << File.join(File.dirname(__FILE__), '..', 'lib')
 require 'active_record'
 require 'acts_as_readable'
 
-ActiveRecord::Base.establish_connection(:adapter => "postgresql", :database => "acts_as_readable_test") # Not using sqlite3 for testing because of its ridiculous boolean handling
+ActiveRecord::Base.establish_connection(
+  :adapter => "postgresql",
+  :host => "localhost",
+  :encoding => "unicode",
+  :database => "acts_as_readable_test",
+  :username => ENV["POSTGRES_USER"],
+  :password => ENV["POSTGRES_PASSWORD"]
+)
 
 ActiveRecord::Schema.define(:version => 0) do
   create_table :users, :force => true do |t|
