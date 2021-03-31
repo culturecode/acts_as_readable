@@ -63,7 +63,7 @@ module ActsAsReadable
     # If a :cache option has been set in acts_as_readable, a timestamp will be updated on the user instead of creating individual readings for each record
     def read_by!(user)
       if user.has_attribute?(acts_as_readable_options[:cache])
-        Reading.delete_all(:user_id => user.id, :readable_type => name)
+        Reading.where(:user_id => user.id, :readable_type => name).delete_all
         user.update_column(acts_as_readable_options[:cache], Time.now)
       else
         unread_by(user).find_each do |record|
