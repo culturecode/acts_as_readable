@@ -17,6 +17,10 @@ module ActsAsReadable
       extend ActsAsReadable::ClassMethods
       include ActsAsReadable::InstanceMethods
     end
+
+    def acts_as_reader
+      has_many :readings, :dependent => :delete_all
+    end
   end
 
   module HelperMethods
@@ -129,4 +133,3 @@ module ActsAsReadable
     end
   end
 end
-
