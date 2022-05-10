@@ -32,4 +32,12 @@ TODO...
 
 	bob.readings                      # => [<Reading 1>]
 
+=== Testing
+
+There are multiple gemfiles available for testing against different Rails versions.  Set `BUNDLE_GEMFILE` to target them, e.g.
+
+  bundle install
+  BUNDLE_GEMFILE=gemfiles/rails7.gemfile bundle exec rspec
+
+
 Copyright (c) 2012 Culture Code Software Consulting. Released under the MIT license
