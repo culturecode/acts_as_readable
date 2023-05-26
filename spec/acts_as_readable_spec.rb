@@ -28,16 +28,23 @@ describe 'acts_as_readable' do
       expect( Comment.unread_by(@user) ).to include(@comment)
     end
 
+    it "should return records explicitly marked as unread after the user 'read all'" do
+      @comment.read_by! @user
+      Comment.read_by! @user
+      @comment.unread_by! @user
+      expect( Comment.unread_by(@user) ).to include(@comment)
+    end
+
     it "should not return records explicitly marked as unread if the user has 'read all' after the record was marked unread" do
       @comment.unread_by! @user
       Comment.read_by! @user
       expect( Comment.unread_by(@user) ).not_to include(@comment)
     end
 
-    it "should return records that have been updated since they were last read" do
+    it "should not return records that have been updated since they were last read" do
       @comment.read_by! @user
       @comment.touch
-      expect( Comment.unread_by(@user) ).to include(@comment)
+      expect( Comment.unread_by(@user) ).not_to include(@comment)
     end
 
     it "should return records that have been updated since they were last unread" do
@@ -48,6 +55,10 @@ describe 'acts_as_readable' do
   end
 
   describe "the read scope" do
+    it "should not return records without readings if the user has not 'read all'" do
+      expect( Comment.read_by(@user) ).not_to include(@comment)
+    end
+
     it "should return records without readings if the user has 'read all' since the last time the record was updated" do
       Comment.read_by! @user
       expect( Comment.read_by(@user) ).to include(@comment)
@@ -58,16 +69,100 @@ describe 'acts_as_readable' do
       expect( Comment.read_by(@user) ).to include(@comment)
     end
 
-    it "should return records explicitly marked as read if the user has 'read all' before the record was marked unread" do
+    it "should return records explicitly marked as read if the user has 'read all' before the record was marked read" do
       Comment.read_by! @user
       @comment.read_by! @user
       expect( Comment.read_by(@user) ).to include(@comment)
+    end
+
+    it "should not return records explicitly marked as unread after the user 'read all'" do
+      @comment.read_by! @user
+      Comment.read_by! @user
+      @comment.unread_by! @user
+      expect( Comment.read_by(@user) ).not_to include(@comment)
     end
 
     it "should return records explicitly marked as unread if the user has 'read all' after the record was marked unread" do
       @comment.unread_by! @user
       Comment.read_by! @user
       expect( Comment.read_by(@user) ).to include(@comment)
+    end
+
+    it "should return records that have been updated since they were last read" do
+      @comment.read_by! @user
+      @comment.touch
+      expect( Comment.read_by(@user) ).to include(@comment)
+    end
+  end
+
+  describe "the latest_update_read_by scope" do
+    it "should return records without readings if the user has 'read all' since the last time the record was updated" do
+      Comment.read_by! @user
+      expect( Comment.latest_update_read_by(@user) ).to include(@comment)
+    end
+
+    it "should return records explicitly marked as read if the user hasn't 'read all'" do
+      @comment.read_by! @user
+      expect( Comment.latest_update_read_by(@user) ).to include(@comment)
+    end
+
+    it "should return records explicitly marked as read if the user has 'read all' before the record was marked unread" do
+      Comment.read_by! @user
+      @comment.read_by! @user
+      expect( Comment.latest_update_read_by(@user) ).to include(@comment)
+    end
+
+    it "should return records explicitly marked as unread if the user has 'read all' after the record was marked unread" do
+      @comment.unread_by! @user
+      Comment.read_by! @user
+      expect( Comment.latest_update_read_by(@user) ).to include(@comment)
+    end
+
+    it "should not return records that have been updated since they were last read" do
+      @comment.read_by! @user
+      @comment.touch
+      expect( Comment.latest_update_read_by(@user) ).not_to include(@comment)
+    end
+
+    it "should return records updated after being read after a bulk read_by" do
+      @comment.read_by! @user
+      @comment.touch
+      Comment.read_by! @user
+      expect( Comment.latest_update_read_by(@user) ).to include(@comment)
+    end
+  end
+
+  describe "the latest_update_unread_by scope" do
+    it "should not return records explicitly marked as read" do
+      @comment.read_by! @user
+      expect( Comment.latest_update_unread_by(@user) ).not_to include(@comment)
+    end
+
+    it "should return records without readings if the user hasn't 'read all'" do
+      expect( Comment.latest_update_unread_by(@user) ).to include(@comment)
+    end
+
+    it "should return records explicitly marked as unread if the user hasn't 'read all'" do
+      @comment.unread_by! @user
+      expect( Comment.latest_update_unread_by(@user) ).to include(@comment)
+    end
+
+    it "should return records explicitly marked as unread if the user has 'read all' before the record was marked unread" do
+      Comment.read_by! @user
+      @comment.unread_by! @user
+      expect( Comment.latest_update_unread_by(@user) ).to include(@comment)
+    end
+
+    it "should not return records explicitly marked as unread if the user has 'read all' after the record was marked unread" do
+      @comment.unread_by! @user
+      Comment.read_by! @user
+      expect( Comment.latest_update_unread_by(@user) ).not_to include(@comment)
+    end
+
+    it "should return records that have been updated since they were last read" do
+      @comment.read_by! @user
+      @comment.touch
+      expect( Comment.latest_update_unread_by(@user) ).to include(@comment)
     end
   end
 
