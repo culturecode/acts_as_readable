@@ -8,11 +8,13 @@ module ActsAsReadable
 
       User.has_many :readings,  :dependent => :delete_all
 
-      has_many :readings,       :as => :readable, :dependent => :delete_all
-      has_many :readers,        lambda { where :readings => {:state => 'read'} }, :through => :readings, :source => :user
+      has_many :readings, :as => :readable, :dependent => :delete_all
+      has_many :readers, lambda { where :readings => {:state => 'read'} }, :through => :readings, :source => :user
 
-      scope :read_by,           lambda {|user| ActsAsReadable::HelperMethods.outer_join_readings(all, user).where(ActsAsReadable::HelperMethods.read_conditions(self, user))}
-      scope :unread_by,         lambda {|user| ActsAsReadable::HelperMethods.outer_join_readings(all, user).where(ActsAsReadable::HelperMethods.unread_conditions(self, user))}
+      scope :read_by, lambda {|user| ActsAsReadable::HelperMethods.outer_join_readings(all, user).where(ActsAsReadable::HelperMethods.read_conditions(self, user, :created_at))}
+      scope :unread_by, lambda {|user| ActsAsReadable::HelperMethods.outer_join_readings(all, user).where(ActsAsReadable::HelperMethods.unread_conditions(self, user, :created_at))}
+      scope :latest_update_read_by, lambda {|user| ActsAsReadable::HelperMethods.outer_join_readings(all, user).where(ActsAsReadable::HelperMethods.read_conditions(self, user, :updated_at))}
+      scope :latest_update_unread_by, lambda {|user| ActsAsReadable::HelperMethods.outer_join_readings(all, user).where(ActsAsReadable::HelperMethods.unread_conditions(self, user, :updated_at))}
 
       extend ActsAsReadable::ClassMethods
       include ActsAsReadable::InstanceMethods
@@ -24,19 +26,19 @@ module ActsAsReadable
   end
 
   module HelperMethods
-    def self.read_conditions(readable_class, user)
-      ["(readable_type IS NULL     AND COALESCE(#{readable_class.table_name}.updated_at < :all_read_at, :true))
-     OR (readable_type IS NOT NULL AND COALESCE(readings.updated_at < :all_read_at, :true))
-     OR (readings.state = 'read')",
-     :all_read_at => all_read_at(readable_class, user), :true => true]
+    def self.read_conditions(readable_class, user, timestamp)
+      ["(readings.state IS NULL    AND COALESCE(#{readable_class.table_name}.#{timestamp} <= :all_read_at, FALSE))
+     OR (readings.state = 'unread' AND COALESCE(readings.updated_at <= :all_read_at, FALSE))
+     OR (readings.state = 'read'   AND #{readable_class.table_name}.#{timestamp} <= readings.#{timestamp})",
+     :all_read_at => all_read_at(readable_class, user)]
     end
 
-    def self.unread_conditions(readable_class, user)
+    def self.unread_conditions(readable_class, user, timestamp)
       # IF there is no reading and it has been updated since we last read all OR there is an unreading and we haven't read all since then
-      ["(readings.state IS NULL    AND COALESCE(#{readable_class.table_name}.updated_at > :all_read_at, :true))
-     OR (readings.state = 'unread' AND COALESCE(readings.updated_at > :all_read_at, :true))
-     OR (readings.state = 'read'   AND COALESCE(#{readable_class.table_name}.updated_at > readings.updated_at, :true))",
-     :all_read_at => all_read_at(readable_class, user), :true => true]
+      ["(readings.state IS NULL    AND COALESCE(#{readable_class.table_name}.#{timestamp} > :all_read_at, TRUE))
+     OR (readings.state = 'unread' AND COALESCE(readings.updated_at > :all_read_at, TRUE))
+     OR (readings.state = 'read'   AND #{readable_class.table_name}.#{timestamp} > readings.#{timestamp})",
+     :all_read_at => all_read_at(readable_class, user)]
     end
 
     def self.all_read_at(readable_class, user)
