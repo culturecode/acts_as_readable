@@ -17,6 +17,7 @@ ActiveRecord::Schema.define(:version => 0) do
   end
 
   create_table :comments, :force => true do |t|
+    t.string :type
     t.timestamps
   end
 
@@ -33,6 +34,9 @@ end
 
 class Comment < ActiveRecord::Base
   acts_as_readable :cache => :comments_read_at
+end
+
+class PrivateComment < Comment
 end
 
 

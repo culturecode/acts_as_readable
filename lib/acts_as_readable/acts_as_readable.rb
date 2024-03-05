@@ -44,7 +44,11 @@ module ActsAsReadable
     end
 
     def self.outer_join_readings(scope, user)
-      scope.joins("LEFT OUTER JOIN readings ON readings.readable_type = '#{scope.model.name}' AND readings.readable_id = #{scope.model.table_name}.id AND readings.user_id = #{user.id}")
+      scope.joins("LEFT OUTER JOIN readings ON readings.readable_type = '#{readable_type(scope.model)}' AND readings.readable_id = #{scope.model.table_name}.id AND readings.user_id = #{user.id}")
+    end
+
+    def self.readable_type(readable_class)
+      readable_class.base_class.name
     end
   end
 
@@ -52,7 +56,7 @@ module ActsAsReadable
     # Find all the readings of the readables by the user in a single SQL query and cache them in the readables for use in the view.
     def cache_readings_for(readables, user)
       readings = []
-      Reading.where(:readable_type => name, :readable_id => readables.collect(&:id), :user_id => user.id).each do |reading|
+      Reading.where(:readable_type => HelperMethods.readable_type(self), :readable_id => readables.collect(&:id), :user_id => user.id).each do |reading|
         readings[reading.readable_id] = reading
       end
 
@@ -67,7 +71,7 @@ module ActsAsReadable
     # If a :cache option has been set in acts_as_readable, a timestamp will be updated on the user instead of creating individual readings for each record
     def read_by!(user)
       if user.has_attribute?(acts_as_readable_options[:cache])
-        Reading.where(:user_id => user.id, :readable_type => name).delete_all
+        Reading.where(:user_id => user.id, :readable_type => HelperMethods.readable_type(self)).delete_all
         user.update_column(acts_as_readable_options[:cache], Time.now)
       else
         unread_by(user).find_each do |record|
@@ -86,7 +90,7 @@ module ActsAsReadable
 
     def read_by!(user)
       # Find an existing reading and update the record so we can know when the thing was first read, and the last time we read it
-      reading = Reading.find_or_initialize_by(:user_id => user.id, :readable_id => self.id, :readable_type => self.class.name)
+      reading = Reading.find_or_initialize_by(:user_id => user.id, :readable_id => self.id, :readable_type => HelperMethods.readable_type(self.class))
       reading.updated_at = Time.now # Explicitly set the read time to now in order to force a save in case we haven't changed anything else about the reading
       reading.state = :read
       reading.save!
@@ -96,7 +100,7 @@ module ActsAsReadable
     end
 
     def unread_by!(user)
-      reading = Reading.find_or_initialize_by(:user_id => user.id, :readable_id => self.id, :readable_type => self.class.name)
+      reading = Reading.find_or_initialize_by(:user_id => user.id, :readable_id => self.id, :readable_type => HelperMethods.readable_type(self.class))
       reading.state = :unread
       reading.save!
     end

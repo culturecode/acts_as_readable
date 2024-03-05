@@ -32,6 +32,13 @@ TODO...
 
 	bob.readings                      # => [<Reading 1>]
 
+=== Upgrading from 2.3.x to 2.4.0
+
+Version 2.4.0 now supports reading and querying against STI subclasses, even when the read and queried subclass don't
+match. This requires you to migrate the `readings.readable_type` column data to the base class name of the stored class
+name, as in versions prior to 2.4.0 the column stored the class name of whatever instance was being read, event STI
+subclasses.
+
 === Testing
 
 There are multiple gemfiles available for testing against different Rails versions.  Set `BUNDLE_GEMFILE` to target them, e.g.
@@ -40,4 +47,4 @@ There are multiple gemfiles available for testing against different Rails versio
   BUNDLE_GEMFILE=gemfiles/rails7.gemfile bundle exec rspec
 
 
-Copyright (c) 2012 Culture Code Software Consulting. Released under the MIT license
+Copyright (c) 2024 Culture Code Software Consulting. Released under the MIT license
