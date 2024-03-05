@@ -6,8 +6,6 @@ module ActsAsReadable
       class_attribute :acts_as_readable_options
       self.acts_as_readable_options = options
 
-      User.has_many :readings,  :dependent => :delete_all
-
       has_many :readings, :as => :readable, :dependent => :delete_all
       has_many :readers, lambda { where :readings => {:state => 'read'} }, :through => :readings, :source => :user
 
