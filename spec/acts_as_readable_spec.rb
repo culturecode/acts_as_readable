@@ -9,6 +9,14 @@ describe 'acts_as_readable' do
       @user = User.create
     end
 
+    describe '::unread_by!' do
+      it "clears all readings with this readable class for the given user" do
+        readable_class.read_by! @user
+        expect { readable_class.unread_by! @user }
+          .to change { queryable_class.unread_by(@user) }.to include(@queryable)
+      end
+    end
+
     describe "the unread scope" do
       it "should not return records explicitly marked as read" do
         @readable.read_by! @user

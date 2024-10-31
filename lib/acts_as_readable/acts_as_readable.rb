@@ -79,6 +79,19 @@ module ActsAsReadable
         end
       end
     end
+
+    # Mark all records as unread by the user
+    # If a :cache option has been set in acts_as_readable, a timestamp will be cleared on the user as well as deleting all readings for that user with this class as the readable type
+    def unread_by!(user)
+      if user.has_attribute?(acts_as_readable_options[:cache])
+        Reading.where(:user_id => user.id, :readable_type => HelperMethods.readable_type(self)).delete_all
+        user.update_column(acts_as_readable_options[:cache], nil)
+      else
+        read_by(user).find_each do |record|
+          record.unread_by!(user)
+        end
+      end
+    end
   end
 
   module InstanceMethods
