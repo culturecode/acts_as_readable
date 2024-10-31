@@ -107,15 +107,24 @@ module ActsAsReadable
       reading.updated_at = Time.now # Explicitly set the read time to now in order to force a save in case we haven't changed anything else about the reading
       reading.state = :read
       reading.save!
+      @read_by_retried = false
     rescue ActiveRecord::RecordNotUnique
-      # Database-level uniqueness constraint failed.
-      return self
+      unless @read_by_retried
+        @read_by_retried = true
+        retry
+      end
     end
 
     def unread_by!(user)
       reading = Reading.find_or_initialize_by(:user_id => user.id, :readable_id => self.id, :readable_type => HelperMethods.readable_type(self.class))
       reading.state = :unread
       reading.save!
+      @unread_by_retried = false
+    rescue ActiveRecord::RecordNotUnique
+      unless @unread_by_retried
+        @unread_by_retried = true
+        retry
+      end
     end
 
     def read_by?(user)
