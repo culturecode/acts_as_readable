@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.require_path = "lib"
   s.files = Dir.glob("{generators,lib,spec}/**/*") + %w(README.rdoc)
 
-  s.add_dependency('rails', ['> 5', '< 8'])
+  s.add_dependency('rails', ['> 5', '< 9'])
   s.add_development_dependency('pg')
   s.add_development_dependency('rspec-rails', '~> 4')
 end
